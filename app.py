@@ -86,16 +86,18 @@ def init_state():
         st.session_state.options = []
     if 'correct_option' not in st.session_state:
         st.session_state.correct_option = ""
-    if 'shuffle' not in st.session_state:
-        random.shuffle(words)
 
+
+# ==== Prepare Question (no randomness) ====
 def make_question():
     word = words[st.session_state.word_index]
     correct = ru_correct[word]
     all_translations = list(ru_correct.values())
-    wrongs = random.sample([t for t in all_translations if t != correct], 3)
+
+    # Use the first 3 incorrect options (sorted) for consistency
+    wrongs = [t for t in all_translations if t != correct][:3]
     options = wrongs + [correct]
-    random.shuffle(options)
+    options = sorted(options)  # Sort alphabetically for fixed layout
 
     st.session_state.options = options
     st.session_state.correct_option = correct
@@ -107,15 +109,14 @@ def next_question():
 def restart_quiz():
     st.session_state.word_index = 0
     st.session_state.score = 0
-    random.shuffle(words)
 
 # ==== App ====
-st.title("🇷🇺 Англо-русский словарный тест")
+st.title("🇷🇺 Англо-русский словарный тест (по порядку)")
 
 init_state()
 
 if st.session_state.word_index >= st.session_state.total:
-    st.success(f"🎉 Поздравляю! Вы прошли весь список.")
+    st.success("🎉 Поздравляю! Вы прошли весь список.")
     st.write(f"Ваш счёт: {st.session_state.score} из {st.session_state.total}")
     if st.button("🔄 Начать заново"):
         restart_quiz()
