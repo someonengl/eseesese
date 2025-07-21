@@ -124,7 +124,7 @@ if st.session_state.quiz_ended:
     if st.button("🔄 Начать заново"):
         for key in list(st.session_state.keys()):
             del st.session_state[key]
-        st.experimental_rerun()
+        
     st.stop()
 
 # Show feedback from previous question
