@@ -1,233 +1,140 @@
+
 import streamlit as st
 import random
-import difflib
+words = [
+    "aftermath", "also-ran", "amenable", "aptitude", "askew", "aspire", "castigate", "circa",
+    "comprise", "dispel", "divine", "domain", "dormant", "edifice", "egalitarian", "embellish",
+    "embody", "emit", "endure", "evade", "exhume", "expunge", "facilitate", "fathom", "feign",
+    "fickle", "fortuitous", "husbandry", "idiosyncrasy", "impede", "irascible", "legacy", "lieu",
+    "loiter", "maim", "muse", "nepotism", "lithe", "mawkish", "frank", "diatribe", "appease",
+    "camaraderie", "paragon", "ebullience", "sublime", "opaque", "serene", "batter", "bevy", "crony",
+    "quaff", "quail", "bandy", "demise", "acme", "crux", "brink", "abhor", "appalling", "raze",
+    "raucous", "placate", "penury", "nefarious", "morose", "intimidate", "insularity", "innocuous",
+    "incongruous", "impudence", "gregarious", "garrulous", "emulate", "zealot", "deride",
+    "braggart", "affable", "adversity", "elusive", "stolid", "scrutinize", "mogul", "armament",
+    "prattle", "booty", "plethora", "exodus", "cascade", "skullduggery", "specter", "pinguid",
+    "eloquent", "winnow", "escapade", "dolt", "adherent", "waffle", "onerous", "chide", "cranny",
+    "hoard", "masticate", "laudable", "tyro", "vertigo", "supplant", "relay", "adjoining", "dispute",
+    "glacial", "fowl", "prolong", "gallant", "courtesy", "lanky", "accumulate", "scenic",
+    "meddlesome", "rendezvous", "refuge", "inquisitive", "stout", "prosperity", "reside", "ample",
+    "unfurl", "exceptional", "mingled", "voracious", "obese", "don", "plucky", "cupidity", "curtail",
+    "animosity", "respite", "garner", "annex", "arduous", "kindle", "capacious", "accolade",
+    "assail", "doff", "altercation", "disparage", "petulant", "deduce", "deft", "ostracize",
+    "ensemble", "engulf", "dessicate", "denounce", "abstruce", "wither", "truncate", "wane",
+    "somber", "rivet", "sundry", "prowess", "plight", "permeate", "precarious", "revere", "forsake",
+    "to curb", "rife", "chastise", "tantalize", "surmise", "disperse", "evince"
+]
 
-# --- Set page settings ---
-st.set_page_config(page_title="Vocabulary Quiz", layout="centered")
-
-# --- Word dictionary: English to Russian ---
-translations = {
-    "aftermath": "последствие",
-    "also-ran": "проигравший",
-    "amenable": "податливый",
-    "aptitude": "способность",
-    "askew": "криво",
-    "aspire": "стремиться",
-    "castigate": "жестко критиковать",
-    "circa": "примерно",
-    "comprise": "включать",
-    "dispel": "развеять",
-    "divine": "предугадывать",
-    "domain": "область",
-    "dormant": "спящий",
-    "edifice": "сооружение",
-    "egalitarian": "эгалитарный",
-    "embellish": "приукрашивать",
-    "embody": "воплощать",
-    "emit": "излучать",
-    "endure": "выдерживать",
-    "evade": "уклоняться",
-    "exhume": "эксгумировать",
-    "expunge": "вычеркнуть",
-    "facilitate": "облегчать",
-    "fathom": "постичь",
-    "feign": "притворяться",
-    "fickle": "непостоянный",
-    "fortuitous": "случайный",
-    "husbandry": "земледелие",
-    "idiosyncrasy": "особенность",
-    "impede": "препятствовать",
-    "irascible": "вспыльчивый",
-    "legacy": "наследие",
-    "lieu": "вместо",
-    "loiter": "слоняться",
-    "maim": "калечить",
-    "muse": "размышлять",
-    "nepotism": "кумовство",
-    "lithe": "гибкий",
-    "mawkish": "слащавый",
-    "frank": "откровенный",
-    "diatribe": "резкая речь",
-    "appease": "умиротворять",
-    "camaraderie": "товарищество",
-    "paragon": "образец",
-    "ebullience": "энтузиазм",
-    "sublime": "возвышенный",
-    "opaque": "непрозрачный",
-    "serene": "безмятежный",
-    "batter": "избивать",
-    "bevy": "толпа",
-    "crony": "приятель",
-    "quaff": "пить залпом",
-    "quail": "струсить",
-    "bandy": "обмениваться (словами)",
-    "demise": "кончина",
-    "acme": "апогей",
-    "crux": "суть",
-    "brink": "край",
-    "abhor": "ненавидеть",
-    "appalling": "ужасающий",
-    "raze": "сносить",
-    "raucous": "шумный",
-    "placate": "успокаивать",
-    "penury": "нищета",
-    "nefarious": "гнусный",
-    "morose": "угрюмый",
-    "intimidate": "запугивать",
-    "insularity": "замкнутость",
-    "innocuous": "безобидный",
-    "incongruous": "несоответствующий",
-    "impudence": "наглость",
-    "gregarious": "общительный",
-    "garrulous": "болтливый",
-    "emulate": "подражать",
-    "zealot": "фанатик",
-    "deride": "высмеивать",
-    "braggart": "хвастун",
-    "affable": "приветливый",
-    "adversity": "бедствия",
-    "elusive": "неуловимый",
-    "stolid": "флегматичный",
-    "scrutinize": "тщательно изучать",
-    "mogul": "магнат",
-    "armament": "вооружение",
-    "prattle": "лепетать",
-    "booty": "добыча",
-    "plethora": "изобилие",
-    "exodus": "массовый исход",
-    "cascade": "каскад",
-    "skullduggery": "жульничество",
-    "specter": "призрак",
-    "pinguid": "жирный",
-    "eloquent": "красноречивый",
-    "winnow": "отсеивать",
-    "escapade": "шалость",
-    "dolt": "простофиля",
-    "adherent": "сторонник",
-    "waffle": "болтовня",
-    "onerous": "обременительный",
-    "chide": "бранить",
-    "cranny": "щель",
-    "hoard": "копить",
-    "masticate": "жевать",
-    "laudable": "похвальный",
-    "tyro": "новичок",
-    "vertigo": "головокружение",
-    "supplant": "вытеснять",
-    "relay": "передавать",
-    "adjoining": "прилегающий",
-    "dispute": "спор",
-    "glacial": "ледяной",
-    "fowl": "домашняя птица",
-    "prolong": "продлить",
-    "gallant": "храбрый",
-    "courtesy": "вежливость",
-    "lanky": "долговязый",
-    "accumulate": "накапливать",
-    "scenic": "живописный",
-    "meddlesome": "назойливый",
-    "rendezvous": "встреча",
-    "refuge": "убежище",
-    "inquisitive": "любопытный",
-    "stout": "крепкий",
-    "prosperity": "процветание",
-    "reside": "проживать",
-    "ample": "обильный",
-    "unfurl": "разворачивать",
-    "exceptional": "исключительный",
-    "mingled": "смешанный",
-    "voracious": "прожорливый",
-    "obese": "ожиревший",
-    "don": "надевать",
-    "plucky": "отважный",
-    "cupidity": "алчность",
-    "curtail": "сокращать",
-    "animosity": "враждебность",
-    "respite": "передышка",
-    "garner": "собирать",
-    "annex": "присоединять",
-    "arduous": "тяжелый",
-    "kindle": "разжигать",
-    "capacious": "вместительный",
-    "accolade": "похвала",
-    "assail": "атаковать",
-    "doff": "снять (одежду)",
-    "altercation": "ссора",
-    "disparage": "принижать",
-    "petulant": "раздражительный",
-    "deduce": "делать вывод",
-    "deft": "ловкий",
-    "ostracize": "изгонять",
-    "ensemble": "ансамбль",
-    "engulf": "поглощать",
-    "desiccate": "высушивать",
-    "denounce": "осуждать",
-    "abstruse": "заумный",
-    "wither": "увядать",
-    "truncate": "усекать",
-    "wane": "убывать",
-    "somber": "мрачный",
-    "rivet": "заклепка",
-    "sundry": "различный",
-    "prowess": "мастерство",
-    "plight": "тяжелое положение",
-    "permeate": "проникать",
-    "precarious": "ненадежный",
-    "revere": "почитать",
-    "forsake": "покидать",
-    "curb": "сдерживать",
-    "rife": "распространенный",
-    "chastise": "наказывать",
-    "tantalize": "дразнить",
-    "surmise": "догадываться",
-    "disperse": "рассеивать",
-    "evince": "проявлять",
+ru_correct = {
+    "aftermath":"последствия","also-ran":"неудачник","amenable":"податливый",
+    "aptitude":"способность","askew":"криво","aspire":"стремиться","castigate":"наказывать",
+    "circa":"примерно","comprise":"включать","dispel":"развеять","divine":"предугадывать",
+    "domain":"область","dormant":"спящий","edifice":"здание","egalitarian":"уравнительный",
+    "embellish":"приукрашивать","embody":"воплощать","emit":"излучать","endure":"терпеть",
+    "evade":"уклоняться","exhume":"откапывать","expunge":"вычеркивать",
+    "facilitate":"облегчать","fathom":"постигать","feign":"притворяться",
+    "fickle":"непостоянный","fortuitous":"случайный","husbandry":"земледелие",
+    "idiosyncrasy":"особенность","impede":"препятствовать","irascible":"вспыльчивый",
+    "legacy":"наследие","lieu":"место","loiter":"слоняться","maim":"калечить",
+    "muse":"размышлять","nepotism":"кумовство","lithe":"гибкий","mawkish":"слащавый",
+    "frank":"откровенный","diatribe":"обличение","appease":"умиротворять",
+    "camaraderie":"товарищество","paragon":"образец","ebullience":"оживление",
+    "sublime":"возвышенный","opaque":"непрозрачный","serene":"безмятежный",
+    "batter":"колотить","bevy":"группа","crony":"дружок","quaff":"питьзалпом",
+    "quail":"струсить","bandy":"обмениваться","demise":"кончина","acme":"пик","crux":"суть",
+    "brink":"край","abhor":"ненавидеть","appalling":"ужасающий","raze":"сносить",
+    "raucous":"резкий","placate":"успокаивать","penury":"нищета","nefarious":"гнусный",
+    "morose":"угрюмый","intimidate":"запугивать","insularity":"замкнутость",
+    "innocuous":"безвредный","incongruous":"несовместимый","impudence":"наглость",
+    "gregarious":"общительный","garrulous":"болтливый","emulate":"подражать",
+    "zealot":"фанатик","deride":"высмеивать","braggart":"хвастун","affable":"приветливый",
+    "adversity":"невзгоды","elusive":"неуловимый","stolid":"флегматичный",
+    "scrutinize":"изучать","mogul":"магнат","armament":"вооружение","prattle":"болтовня",
+    "booty":"добыча","plethora":"изобилие","exodus":"массовыйуход","cascade":"водопад",
+    "skullduggery":"махинации","specter":"призрак","pinguid":"жирный","eloquent":"красноречивый",
+    "winnow":"отсеивать","escapade":"шалость","dolt":"болван","adherent":"сторонник",
+    "waffle":"колебаться","onerous":"обременительный","chide":"бранить","cranny":"щель",
+    "hoard":"запасать","masticate":"жевать","laudable":"похвальный","tyro":"новичок",
+    "vertigo":"головокружение","supplant":"вытеснять","relay":"эстафета","adjoining":"смежный",
+    "dispute":"спор","glacial":"ледниковый","fowl":"домптица","prolong":"продлевать",
+    "gallant":"храбрый","courtesy":"вежливость","lanky":"долговязый","accumulate":"накапливать",
+    "scenic":"живописный","meddlesome":"назойливый","rendezvous":"встреча","refuge":"убежище",
+    "inquisitive":"любознательный","stout":"крепкий","prosperity":"процветание",
+    "reside":"проживать","ample":"обширный","unfurl":"разворачивать","exceptional":"исключительный",
+    "mingled":"смешанный","voracious":"ненасытный","obese":"тучный","don":"надевать",
+    "plucky":"смелый","cupidity":"алчность","curtail":"сокращать","animosity":"враждебность",
+    "respite":"передышка","garner":"собирать","annex":"присоединять","arduous":"трудный",
+    "kindle":"разжигать","capacious":"вместительный","accolade":"похвала","assail":"атаковать",
+    "doff":"снимать","altercation":"ссора","disparage":"умалять","petulant":"раздражительный",
+    "deduce":"делатьвывод","deft":"ловкий","ostracize":"изгонять","ensemble":"ансамбль",
+    "engulf":"поглощать","dessicate":"высушивать","denounce":"осуждать","abstruce":"непонятный",
+    "wither":"увядать","truncate":"усекать","wane":"убывать","somber":"мрачный","rivet":"заклепка",
+    "sundry":"разный","prowess":"мастерство","plight":"бедственное","permeate":"проникать",
+    "precarious":"ненадежный","revere":"почитать","forsake":"покидать","to curb":"сдерживать",
+    "rife":"изобилующий","chastise":"суровокричать","tantalize":"дразнить","surmise":"догадка",
+    "disperse":"рассеивать","evince":"проявлять"
 }
 
-# --- Functions ---
-def get_options(correct_word, correct_answer):
-    distractors = random.sample([v for k, v in translations.items() if k != correct_word], 3)
-    options = distractors + [correct_answer]
+def init_state():
+    if 'word_index' not in st.session_state:
+        st.session_state.word_index = 0
+    if 'score' not in st.session_state:
+        st.session_state.score = 0
+    if 'total' not in st.session_state:
+        st.session_state.total = len(words)
+    if 'options' not in st.session_state:
+        st.session_state.options = []
+    if 'correct_option' not in st.session_state:
+        st.session_state.correct_option = ""
+    if 'shuffle' not in st.session_state:
+        random.shuffle(words)
+
+def make_question():
+    word = words[st.session_state.word_index]
+    correct = ru_correct[word]
+    all_translations = list(ru_correct.values())
+    wrongs = random.sample([t for t in all_translations if t != correct], 3)
+    options = wrongs + [correct]
     random.shuffle(options)
-    return options
 
-def is_similar(user_input, correct_answer):
-    ratio = difflib.SequenceMatcher(None, user_input.lower(), correct_answer.lower()).ratio()
-    return ratio >= 0.8
+    st.session_state.options = options
+    st.session_state.correct_option = correct
+    return word, options
 
-# --- Session state ---
-if "mastered" not in st.session_state:
-    st.session_state.mastered = set()
-if "current_word" not in st.session_state:
-    st.session_state.current_word, st.session_state.correct_answer = random.choice(list(translations.items()))
-    st.session_state.options = get_options(st.session_state.current_word, st.session_state.correct_answer)
-    st.session_state.answered = False
+def next_question():
+    st.session_state.word_index += 1
 
-# --- Title ---
-st.title("📚 Vocabulary Quiz (EN ➜ RU)")
+def restart_quiz():
+    st.session_state.word_index = 0
+    st.session_state.score = 0
+    random.shuffle(words)
 
-# --- Quiz content ---
-st.write(f"**What does '{st.session_state.current_word}' mean?**")
+# ==== App ====
+st.title("🇷🇺 Англо-русский словарный тест")
 
-for i, opt in enumerate(st.session_state.options, 1):
-    if st.button(f"{i}) {opt}"):
-        if opt == st.session_state.correct_answer:
-            st.success("✅ Correct!")
-            st.session_state.mastered.add(st.session_state.current_word)
-        else:
-            st.error(f"❌ Wrong! Correct answer: {st.session_state.correct_answer}")
-            st.session_state.mastered.clear()
-        st.session_state.answered = True
+init_state()
 
-# --- Next question button ---
-if st.session_state.answered:
-    if len(st.session_state.mastered) == len(translations):
-        st.balloons()
-        st.success("🎉 You mastered all the words!")
-    elif st.button("➡ Next Word"):
-        remaining = [w for w in translations if w not in st.session_state.mastered]
-        new_word = random.choice(remaining)
-        st.session_state.current_word = new_word
-        st.session_state.correct_answer = translations[new_word]
-        st.session_state.options = get_options(new_word, translations[new_word])
-        st.session_state.answered = False
+if st.session_state.word_index >= st.session_state.total:
+    st.success(f"🎉 Поздравляю! Вы прошли весь список.")
+    st.write(f"Ваш счёт: {st.session_state.score} из {st.session_state.total}")
+    if st.button("🔄 Начать заново"):
+        restart_quiz()
+    st.stop()
+
+word, options = make_question()
+st.markdown(f"**Вопрос {st.session_state.word_index + 1} из {st.session_state.total}**")
+st.write(f"Что значит «**{word}**»?")
+
+choice = st.radio("Выберите перевод:", options + ["Не знаю"], key=f"choice_{st.session_state.word_index}")
+
+if st.button("Подтвердить"):
+    if choice == "Не знаю":
+        st.info(f"↩️ Слово «{word}» значит: «{st.session_state.correct_option}». Начнём сначала.")
+        restart_quiz()
+    elif choice == st.session_state.correct_option:
+        st.success("✓ Верно!")
+        st.session_state.score += 1
+        next_question()
+    else:
+        st.error(f"✘ Неверно. Правильный ответ: «{st.session_state.correct_option}».")
+        next_question()
