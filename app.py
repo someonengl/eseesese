@@ -82,36 +82,38 @@ def init_state():
         st.session_state.score = 0
     if 'total' not in st.session_state:
         st.session_state.total = len(words)
-    if 'options' not in st.session_state:
-        st.session_state.options = []
-    if 'correct_option' not in st.session_state:
-        st.session_state.correct_option = ""
+    if 'feedback' not in st.session_state:
+        st.session_state.feedback = ""
+    if 'disable_buttons' not in st.session_state:
+        st.session_state.disable_buttons = False
 
 
-# ==== Prepare Question (no randomness) ====
 def make_question():
     word = words[st.session_state.word_index]
     correct = ru_correct[word]
     all_translations = list(ru_correct.values())
-
-    # Use the first 3 incorrect options (sorted) for consistency
     wrongs = [t for t in all_translations if t != correct][:3]
     options = wrongs + [correct]
-    options = sorted(options)  # Sort alphabetically for fixed layout
+    options = sorted(options)  # or keep order fixed
+    return word, correct, options
 
-    st.session_state.options = options
-    st.session_state.correct_option = correct
-    return word, options
 
-def next_question():
-    st.session_state.word_index += 1
+def process_answer(selected, correct):
+    if selected == "Не знаю":
+        st.session_state.feedback = f"↩️ Слово «{words[st.session_state.word_index]}» значит: «{correct}». Начнём сначала."
+        st.session_state.word_index = 0
+        st.session_state.score = 0
+    elif selected == correct:
+        st.session_state.feedback = "✓ Верно!"
+        st.session_state.score += 1
+        st.session_state.word_index += 1
+    else:
+        st.session_state.feedback = f"✘ Неверно. Правильный ответ: «{correct}»."
+        st.session_state.word_index += 1
 
-def restart_quiz():
-    st.session_state.word_index = 0
-    st.session_state.score = 0
 
-# ==== App ====
-st.title("🇷🇺 Англо-русский словарный тест (по порядку)")
+# ==== Streamlit App ====
+st.title("🇷🇺 Англо-русский словарный тест")
 
 init_state()
 
@@ -119,23 +121,21 @@ if st.session_state.word_index >= st.session_state.total:
     st.success("🎉 Поздравляю! Вы прошли весь список.")
     st.write(f"Ваш счёт: {st.session_state.score} из {st.session_state.total}")
     if st.button("🔄 Начать заново"):
-        restart_quiz()
+        st.session_state.word_index = 0
+        st.session_state.score = 0
+        st.session_state.feedback = ""
     st.stop()
 
-word, options = make_question()
+word, correct, options = make_question()
+
 st.markdown(f"**Вопрос {st.session_state.word_index + 1} из {st.session_state.total}**")
 st.write(f"Что значит «**{word}**»?")
 
-choice = st.radio("Выберите перевод:", options + ["Не знаю"], key=f"choice_{st.session_state.word_index}")
+cols = st.columns(2)
+for i, opt in enumerate(options + ["Не знаю"]):
+    if cols[i % 2].button(opt, key=f"btn_{i}"):
+        process_answer(opt, correct)
+        st.experimental_rerun()
 
-if st.button("Подтвердить"):
-    if choice == "Не знаю":
-        st.info(f"↩️ Слово «{word}» значит: «{st.session_state.correct_option}». Начнём сначала.")
-        restart_quiz()
-    elif choice == st.session_state.correct_option:
-        st.success("✓ Верно!")
-        st.session_state.score += 1
-        next_question()
-    else:
-        st.error(f"✘ Неверно. Правильный ответ: «{st.session_state.correct_option}».")
-        next_question()
+if st.session_state.feedback:
+    st.info(st.session_state.feedback)
