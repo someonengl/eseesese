@@ -80,13 +80,12 @@ def init_state():
         st.session_state.word_index = 0
     if 'score' not in st.session_state:
         st.session_state.score = 0
-    if 'total' not in st.session_state:
-        st.session_state.total = len(words)
+    if 'selected' not in st.session_state:
+        st.session_state.selected = None
     if 'feedback' not in st.session_state:
         st.session_state.feedback = ""
-    if 'disable_buttons' not in st.session_state:
-        st.session_state.disable_buttons = False
-
+    if 'show_next' not in st.session_state:
+        st.session_state.show_next = False
 
 def make_question():
     word = words[st.session_state.word_index]
@@ -94,11 +93,11 @@ def make_question():
     all_translations = list(ru_correct.values())
     wrongs = [t for t in all_translations if t != correct][:3]
     options = wrongs + [correct]
-    options = sorted(options)  # or keep order fixed
+    options = sorted(options)
     return word, correct, options
 
-
-def process_answer(selected, correct):
+def handle_answer(selected, correct):
+    st.session_state.selected = selected
     if selected == "Не знаю":
         st.session_state.feedback = f"↩️ Слово «{words[st.session_state.word_index]}» значит: «{correct}». Начнём сначала."
         st.session_state.word_index = 0
@@ -106,36 +105,39 @@ def process_answer(selected, correct):
     elif selected == correct:
         st.session_state.feedback = "✓ Верно!"
         st.session_state.score += 1
-        st.session_state.word_index += 1
     else:
         st.session_state.feedback = f"✘ Неверно. Правильный ответ: «{correct}»."
-        st.session_state.word_index += 1
-
+    st.session_state.show_next = True
 
 # ==== Streamlit App ====
 st.title("🇷🇺 Англо-русский словарный тест")
 
 init_state()
 
-if st.session_state.word_index >= st.session_state.total:
+if st.session_state.word_index >= len(words):
     st.success("🎉 Поздравляю! Вы прошли весь список.")
-    st.write(f"Ваш счёт: {st.session_state.score} из {st.session_state.total}")
+    st.write(f"Ваш счёт: {st.session_state.score} из {len(words)}")
     if st.button("🔄 Начать заново"):
-        st.session_state.word_index = 0
-        st.session_state.score = 0
-        st.session_state.feedback = ""
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.experimental_rerun()
     st.stop()
 
 word, correct, options = make_question()
 
-st.markdown(f"**Вопрос {st.session_state.word_index + 1} из {st.session_state.total}**")
+st.markdown(f"**Вопрос {st.session_state.word_index + 1} из {len(words)}**")
 st.write(f"Что значит «**{word}**»?")
 
 cols = st.columns(2)
 for i, opt in enumerate(options + ["Не знаю"]):
-    if cols[i % 2].button(opt, key=f"btn_{i}"):
-        process_answer(opt, correct)
-        st.experimental_rerun()
+    if cols[i % 2].button(opt, key=f"btn_{i}", disabled=st.session_state.show_next):
+        handle_answer(opt, correct)
 
 if st.session_state.feedback:
     st.info(st.session_state.feedback)
+
+if st.session_state.show_next and st.button("➡️ Следующий вопрос"):
+    st.session_state.word_index += 1
+    st.session_state.selected = None
+    st.session_state.feedback = ""
+    st.session_state.show_next = False
