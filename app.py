@@ -80,12 +80,10 @@ def init_state():
         st.session_state.word_index = 0
     if 'score' not in st.session_state:
         st.session_state.score = 0
-    if 'selected' not in st.session_state:
-        st.session_state.selected = None
-    if 'feedback' not in st.session_state:
-        st.session_state.feedback = ""
-    if 'show_next' not in st.session_state:
-        st.session_state.show_next = False
+    if 'prev_feedback' not in st.session_state:
+        st.session_state.prev_feedback = ""
+    if 'quiz_ended' not in st.session_state:
+        st.session_state.quiz_ended = False
 
 def make_question():
     word = words[st.session_state.word_index]
@@ -97,47 +95,49 @@ def make_question():
     return word, correct, options
 
 def handle_answer(selected, correct):
-    st.session_state.selected = selected
-    if selected == "Не знаю":
-        st.session_state.feedback = f"↩️ Слово «{words[st.session_state.word_index]}» значит: «{correct}». Начнём сначала."
-        st.session_state.word_index = 0
-        st.session_state.score = 0
-    elif selected == correct:
-        st.session_state.feedback = "✓ Верно!"
+    if selected == correct:
         st.session_state.score += 1
+        st.session_state.prev_feedback = ""
+    elif selected == "Не знаю":
+        st.session_state.prev_feedback = f"↩️ Предыдущее слово «{words[st.session_state.word_index]}» значит: «{correct}»."
     else:
-        st.session_state.feedback = f"✘ Неверно. Правильный ответ: «{correct}»."
-    st.session_state.show_next = True
+        st.session_state.prev_feedback = f"✘ Предыдущее слово «{words[st.session_state.word_index]}» — правильный ответ: «{correct}»."
+
+    st.session_state.word_index += 1
+    if st.session_state.word_index >= len(words):
+        st.session_state.quiz_ended = True
 
 # ==== Streamlit App ====
+st.set_page_config(page_title="Викторина по словам", layout="centered")
 st.title("🇷🇺 Англо-русский словарный тест")
 
 init_state()
 
-if st.session_state.word_index >= len(words):
-    st.success("🎉 Поздравляю! Вы прошли весь список.")
-    st.write(f"Ваш счёт: {st.session_state.score} из {len(words)}")
+# Manual end
+if st.button("❌ Завершить тест"):
+    st.session_state.quiz_ended = True
+
+# End screen
+if st.session_state.quiz_ended:
+    st.success("📝 Тест завершён.")
+    st.write(f"✅ Правильных ответов: **{st.session_state.score}** из **{len(words)}**")
     if st.button("🔄 Начать заново"):
         for key in list(st.session_state.keys()):
             del st.session_state[key]
         st.experimental_rerun()
     st.stop()
 
-word, correct, options = make_question()
+# Show feedback from previous question
+if st.session_state.prev_feedback:
+    st.info(st.session_state.prev_feedback)
 
+# Show current question
+word, correct, options = make_question()
 st.markdown(f"**Вопрос {st.session_state.word_index + 1} из {len(words)}**")
 st.write(f"Что значит «**{word}**»?")
 
 cols = st.columns(2)
 for i, opt in enumerate(options + ["Не знаю"]):
-    if cols[i % 2].button(opt, key=f"btn_{i}", disabled=st.session_state.show_next):
+    if cols[i % 2].button(opt, key=f"btn_{st.session_state.word_index}_{i}"):
         handle_answer(opt, correct)
-
-if st.session_state.feedback:
-    st.info(st.session_state.feedback)
-
-if st.session_state.show_next and st.button("➡️ Следующий вопрос"):
-    st.session_state.word_index += 1
-    st.session_state.selected = None
-    st.session_state.feedback = ""
-    st.session_state.show_next = False
+        st.experimental_rerun()
