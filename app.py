@@ -140,4 +140,3 @@ cols = st.columns(2)
 for i, opt in enumerate(options + ["Не знаю"]):
     if cols[i % 2].button(opt, key=f"btn_{st.session_state.word_index}_{i}"):
         handle_answer(opt, correct)
-        st.experimental_rerun()
